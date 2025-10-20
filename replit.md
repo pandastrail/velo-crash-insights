@@ -126,4 +126,3 @@ Preferred communication style: Simple, everyday language.
 - Local JSON file storage for accident data (`attached_assets/` directory)
 - GeoJSON format for geographic features
 - Schema definition files for data structure documentation
-- 
