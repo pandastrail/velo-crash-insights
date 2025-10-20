@@ -81,8 +81,9 @@ try:
     selected_cantons = st.sidebar.multiselect(
         "Cantons",
         cantons,
-        default=cantons
+        default=['ZH'] if 'ZH' in cantons else cantons  
     )
+    print(cantons)
     
     # Involved parties filter
     st.sidebar.subheader("Involved Parties")
