@@ -32,7 +32,7 @@ with special focus on cyclist safety and risk analysis.
 @st.cache_data
 def get_accident_data():
     # Load from Object Storage
-    return load_accident_data("RoadTrafficAccidentLocations.json", use_object_storage=True)
+    return load_accident_data("attached_assets\RoadTrafficAccidentLocations.json", use_object_storage=False)
 
 try:
     df = get_accident_data()
@@ -49,7 +49,7 @@ try:
     selected_years = st.sidebar.multiselect(
         "Select Years", 
         years, 
-        default=years
+        default=years[-1:]  # Default to the most recent year(s)
     )
     
     # Severity filter
