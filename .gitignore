@@ -212,4 +212,4 @@ __marimo__/
 .replit.md
 
 # Data, File too big to push
-/attached_assets/*
+attached_assets/RoadTrafficAccidentLocations.json
