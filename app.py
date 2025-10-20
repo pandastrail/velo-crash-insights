@@ -83,7 +83,6 @@ try:
         cantons,
         default=['ZH'] if 'ZH' in cantons else cantons  
     )
-    print(cantons)
     
     # Involved parties filter
     st.sidebar.subheader("Involved Parties")

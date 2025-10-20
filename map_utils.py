@@ -1,5 +1,5 @@
 import folium
-from folium.plugins import HeatMap
+from folium.plugins import HeatMap, LocateControl
 import pandas as pd
 import numpy as np
 
@@ -81,6 +81,13 @@ def create_base_map(basemap_style='OpenStreetMap'):
                     overlay=False,
                     control=True
                 ).add_to(m)
+    
+    # Add "My Location" button
+    LocateControl(
+        auto_start=False,
+        position='topleft',
+        strings={'title': 'Show my location', 'popup': 'You are here'}
+    ).add_to(m)
     
     return m
 
