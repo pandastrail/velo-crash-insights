@@ -210,3 +210,6 @@ __marimo__/
 .local/*
 .replit
 .replit.md
+
+# Data, File too big to push
+/attached_assets/*
