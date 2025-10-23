@@ -8,7 +8,8 @@ from plotly.subplots import make_subplots
 import json
 import numpy as np
 from data_loader import load_accident_data
-from map_utils import create_base_map, add_accident_markers, create_heatmap, create_blackspot_map
+from map_utils import (create_base_map, add_accident_markers, create_heatmap, create_blackspot_map, 
+                       add_routing_control, add_geocoding_search, add_custom_osm_layers)
 from analytics import (calculate_summary_stats, create_temporal_analysis, filter_data,
                        identify_blackspot_zones, analyze_seasonal_patterns, 
                        calculate_year_over_year_trends, generate_risk_predictions, calculate_monthly_trends)
@@ -161,7 +162,7 @@ try:
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)'
             )
-            st.plotly_chart(fig_spark, use_container_width=True, key='spark_total')
+            st.plotly_chart(fig_spark, width='stretch', key='spark_total')
         else:
             st.metric("Total Accidents", len(filtered_df))
     
@@ -193,7 +194,7 @@ try:
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)'
             )
-            st.plotly_chart(fig_spark, use_container_width=True, key='spark_fatal')
+            st.plotly_chart(fig_spark, width='stretch', key='spark_fatal')
         else:
             st.metric("Fatal Accidents", fatal_accidents)
     
@@ -225,7 +226,7 @@ try:
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)'
             )
-            st.plotly_chart(fig_spark, use_container_width=True, key='spark_bicycle')
+            st.plotly_chart(fig_spark, width='stretch', key='spark_bicycle')
         else:
             st.metric("Bicycle Accidents", bicycle_accidents)
     
@@ -257,7 +258,7 @@ try:
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)'
             )
-            st.plotly_chart(fig_spark, use_container_width=True, key='spark_pedestrian')
+            st.plotly_chart(fig_spark, width='stretch', key='spark_pedestrian')
         else:
             st.metric("Pedestrian Accidents", pedestrian_accidents)
     
@@ -282,6 +283,11 @@ try:
             
             show_markers = st.checkbox("Show Individual Markers", value=True)
         
+            st.markdown("**OSM Features:**")
+            enable_routing = st.checkbox("Enable Routing", value=False, help="Add route planning between points")
+            enable_search = st.checkbox("Enable Location Search", value=False, help="Search for locations")
+            show_osm_layers = st.checkbox("Show OSM Layers", value=True, help="Add cycling, topo, and humanitarian layers")
+
         with col1:
             if map_style == "Heatmap":
                 # Create heatmap
@@ -295,6 +301,19 @@ try:
                     st.info(f"Showing heatmap view due to large number of accidents ({len(filtered_df)}). Uncheck some filters to see individual markers.")
                     m = create_heatmap(filtered_df, basemap_style=basemap_option)
             
+            # Add OSM features if enabled
+            if show_osm_layers:
+                m = add_custom_osm_layers(m)
+            
+            if enable_routing:
+                m = add_routing_control(m)
+            
+            if enable_search:
+                m = add_geocoding_search(m)
+            
+            # Use a unique key based on selections to force re-render when they change
+            map_key = f"{basemap_option}_{map_style}_{show_markers}_{enable_routing}_{enable_search}_{show_osm_layers}_{len(filtered_df)}"
+
             map_data = st_folium(m, 
                                  width=None, 
                                  height=500,
@@ -315,7 +334,7 @@ try:
                 names=severity_counts.index,
                 title="Accident Severity Distribution"
             )
-            st.plotly_chart(fig_severity, use_container_width=True)
+            st.plotly_chart(fig_severity, width='stretch')
         
         with col2:
             # Accident types
@@ -329,7 +348,7 @@ try:
                 title="Top 10 Accident Types"
             )
             fig_types.update_layout(yaxis={'categoryorder': 'total ascending'})
-            st.plotly_chart(fig_types, use_container_width=True)
+            st.plotly_chart(fig_types, width='stretch')
         
         col1, col2 = st.columns(2)
         
@@ -343,7 +362,7 @@ try:
                 color_continuous_scale='Blues',
                 title="Accidents by Road Type"
             )
-            st.plotly_chart(fig_road, use_container_width=True)
+            st.plotly_chart(fig_road, width='stretch')
         
         with col2:
             # Canton analysis
@@ -353,7 +372,7 @@ try:
                 y=canton_counts.values,
                 title="Top 10 Cantons by Accident Count"
             )
-            st.plotly_chart(fig_canton, use_container_width=True)
+            st.plotly_chart(fig_canton, width='stretch')
     
     with tab3:
         st.subheader("⏰ Temporal Patterns")
@@ -374,7 +393,7 @@ try:
                 title="Accidents by Month",
                 markers=True
             )
-            st.plotly_chart(fig_monthly, use_container_width=True)
+            st.plotly_chart(fig_monthly, width='stretch')
         
         with col2:
             # Hourly distribution
@@ -389,7 +408,7 @@ try:
                 color_continuous_scale='Viridis',
                 title="Accidents by Hour of Day"
             )
-            st.plotly_chart(fig_hourly, use_container_width=True)
+            st.plotly_chart(fig_hourly, width='stretch')
         
         # Weekly pattern
         weekday_data = filtered_df.groupby('AccidentWeekDay_en').size().reset_index(name='count')
@@ -406,7 +425,7 @@ try:
             color_continuous_scale='blues',
             title="Accidents by Day of Week"
         )
-        st.plotly_chart(fig_weekday, use_container_width=True)
+        st.plotly_chart(fig_weekday, width='stretch')
         
         # Heatmap: Hour vs Day of Week
         if not filtered_df.empty:
@@ -422,7 +441,7 @@ try:
                 labels=dict(x="Hour", y="Day of Week", color="Count"),
                 aspect="auto"
             )
-            st.plotly_chart(fig_heatmap, use_container_width=True)
+            st.plotly_chart(fig_heatmap, width='stretch')
         
         # Seasonal analysis
         st.subheader("🌦️ Seasonal Patterns")
@@ -448,7 +467,7 @@ try:
                     color='Count',
                     color_continuous_scale='Blues'
                 )
-                st.plotly_chart(fig_season, use_container_width=True)
+                st.plotly_chart(fig_season, width='stretch')
             
             with col2:
                 # Bicycle accidents by season
@@ -465,7 +484,7 @@ try:
                         title="Bicycle Accidents by Season",
                         markers=True
                     )
-                    st.plotly_chart(fig_bike_season, use_container_width=True)
+                    st.plotly_chart(fig_bike_season, width='stretch')
         
         # Year-over-year trends
         st.subheader("📆 Year-over-Year Trends")
@@ -488,7 +507,7 @@ try:
                     title="Total Accidents Over Years",
                     markers=True
                 )
-                st.plotly_chart(fig_yearly, use_container_width=True)
+                st.plotly_chart(fig_yearly, width='stretch')
             
             with col2:
                 # Bicycle trend
@@ -505,7 +524,7 @@ try:
                         markers=True,
                         line_shape='spline'
                     )
-                    st.plotly_chart(fig_bike_yearly, use_container_width=True)
+                    st.plotly_chart(fig_bike_yearly, width='stretch')
     
     with tab4:
         st.subheader("🔥 Accident Hotspots & Blackspot Zones")
@@ -536,7 +555,7 @@ try:
                                                           'severe_accidents', 'bicycle_accidents', 
                                                           'most_common_type', 'risk_score']].copy()
             display_blackspots.columns = ['Canton', 'Total', 'Fatal', 'Severe', 'Bicycle', 'Common Type', 'Risk Score']
-            st.dataframe(display_blackspots, use_container_width=True)
+            st.dataframe(display_blackspots, width='stretch')
         
         # Risk factors analysis
         st.subheader("Risk Factor Analysis")
@@ -619,7 +638,7 @@ try:
                     color='count',
                     color_continuous_scale='Reds'
                 )
-                st.plotly_chart(fig_bike_hour, use_container_width=True)
+                st.plotly_chart(fig_bike_hour, width='stretch')
             
             with col2:
                 # Bicycle accidents by day of week
@@ -637,7 +656,7 @@ try:
                     color='count',
                     color_continuous_scale='Oranges'
                 )
-                st.plotly_chart(fig_bike_day, use_container_width=True)
+                st.plotly_chart(fig_bike_day, width='stretch')
             
             # Road type and accident type analysis
             col1, col2 = st.columns(2)
@@ -651,7 +670,7 @@ try:
                     names=road_bike.index,
                     title="Bicycle Accidents by Road Type"
                 )
-                st.plotly_chart(fig_bike_road, use_container_width=True)
+                st.plotly_chart(fig_bike_road, width='stretch')
             
             with col2:
                 # Accident types for bicycles
@@ -662,7 +681,7 @@ try:
                     names=type_bike.index,
                     title="Most Common Bicycle Accident Types"
                 )
-                st.plotly_chart(fig_bike_type, use_container_width=True)
+                st.plotly_chart(fig_bike_type, width='stretch')
             
             # Bicycle blackspots
             st.subheader("🎯 Bicycle Accident Blackspots")
@@ -724,14 +743,14 @@ try:
                     if 'day_hour_risks' in risk_predictions and risk_predictions['day_hour_risks']:
                         risk_df = pd.DataFrame(risk_predictions['day_hour_risks'][:5])
                         risk_df.columns = ['Day', 'Hour', 'Accidents']
-                        st.dataframe(risk_df, use_container_width=True, hide_index=True)
+                        st.dataframe(risk_df, width='stretch', hide_index=True)
                 
                 with col2:
                     st.write("**🚴 Cyclist-Specific High-Risk Combinations:**")
                     if 'bicycle_hour_road_risks' in risk_predictions and risk_predictions['bicycle_hour_road_risks']:
                         bike_risk_df = pd.DataFrame(risk_predictions['bicycle_hour_road_risks'][:5])
                         bike_risk_df.columns = ['Hour', 'Road Type', 'Accidents']
-                        st.dataframe(bike_risk_df, use_container_width=True, hide_index=True)
+                        st.dataframe(bike_risk_df, width='stretch', hide_index=True)
                 
                 # Route planning recommendations
                 if 'recommendations' in risk_predictions and risk_predictions['recommendations']:
@@ -763,7 +782,7 @@ try:
                     if col in display_df.columns:
                         display_df[col] = display_df[col].map({'true': '✓', 'false': '✗'})
                 
-                st.dataframe(display_df, use_container_width=True, height=400)
+                st.dataframe(display_df, width='stretch', height=400)
                 
                 # Download button
                 csv = display_df.to_csv(index=False)

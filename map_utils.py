@@ -1,5 +1,5 @@
 import folium
-from folium.plugins import HeatMap, LocateControl, Fullscreen
+from folium.plugins import HeatMap, LocateControl, Fullscreen, Draw, MiniMap, MousePosition, MeasureControl
 import pandas as pd
 import numpy as np
 
@@ -33,20 +33,26 @@ def create_base_map(basemap_style='OpenStreetMap'):
                 location=switzerland_center,
                 zoom_start=8,
                 tiles=tile_url,
-                attr='© swisstopo'
+                attr='© swisstopo',
+                scrollWheelZoom=True,
+                options={'wheelPxPerZoomLevel': 120}
             )
         elif basemap_style in ['Satellite', 'Terrain']:
             m = folium.Map(
                 location=switzerland_center,
                 zoom_start=8,
                 tiles=tile_url,
-                attr='Esri'
+                attr='Esri',
+                scrollWheelZoom=True,
+                options={'wheelPxPerZoomLevel': 120}
             )
         else:
             m = folium.Map(
                 location=switzerland_center,
                 zoom_start=8,
-                tiles=tile_url
+                tiles=tile_url,
+                scrollWheelZoom=True,
+                options={'wheelPxPerZoomLevel': 120}
             )
     else:
         m = folium.Map(
@@ -89,14 +95,57 @@ def create_base_map(basemap_style='OpenStreetMap'):
         auto_start=False,
         position='topleft',
         strings={'title': 'Show my location', 'popup': 'You are here'}
-        ).add_to(m)
+    ).add_to(m)
     
-        # Add fullscreen button
+    # Add fullscreen button
     Fullscreen(
         position='topleft',
         title='Enter fullscreen mode',
         title_cancel='Exit fullscreen mode',
         force_separate_button=True
+    ).add_to(m)
+    
+    # Add MiniMap (overview map in corner)
+    MiniMap(
+        toggle_display=True,
+        tile_layer='OpenStreetMap',
+        position='bottomright',
+        width=150,
+        height=150,
+        zoom_level_offset=-5
+    ).add_to(m)
+    
+    # Add Mouse Position (shows coordinates on hover)
+    MousePosition(
+        position='bottomleft',
+        separator=' | ',
+        prefix='Coordinates:',
+        lat_formatter="function(num) {return L.Util.formatNum(num, 5) + ' N';}",
+        lng_formatter="function(num) {return L.Util.formatNum(num, 5) + ' E';}"
+    ).add_to(m)
+    
+    # Add Measure Control (measure distances and areas)
+    MeasureControl(
+        position='topleft',
+        primary_length_unit='kilometers',
+        secondary_length_unit='meters',
+        primary_area_unit='sqkilometers',
+        secondary_area_unit='sqmeters'
+    ).add_to(m)
+    
+    # Add Draw tools (allows drawing shapes, markers, etc.)
+    Draw(
+        export=True,
+        position='topleft',
+        draw_options={
+            'polyline': {'shapeOptions': {'color': '#f06eaa'}},
+            'polygon': {'shapeOptions': {'color': '#6bc2e5'}},
+            'circle': True,
+            'rectangle': {'shapeOptions': {'color': '#662d91'}},
+            'marker': True,
+            'circlemarker': False
+        },
+        edit_options={'edit': True}
     ).add_to(m)
     
     return m
@@ -367,5 +416,139 @@ def create_blackspot_map(blackspots_df, basemap_style='Swiss Topo'):
             weight=2,
             tooltip=f"Blackspot: {spot['accident_count']} accidents"
         ).add_to(m)
+    
+    return m
+def add_routing_control(m):
+    """
+    Add routing control to the map using Leaflet Routing Machine.
+    Note: This requires internet connection to use OSRM routing service.
+    
+    Args:
+        m (folium.Map): Map object
+        
+    Returns:
+        folium.Map: Map with routing control added
+    """
+    # Add Leaflet Routing Machine via custom HTML/JS
+    routing_script = """
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    <script>
+        // Wait for map to be ready
+        setTimeout(function() {
+            var map = window.map_object;
+            if (map) {
+                L.Routing.control({
+                    waypoints: [],
+                    routeWhileDragging: true,
+                    geocoder: L.Control.Geocoder.nominatim(),
+                    router: L.Routing.osrmv1({
+                        serviceUrl: 'https://router.project-osrm.org/route/v1'
+                    }),
+                    lineOptions: {
+                        styles: [{color: '#6FA1EC', weight: 4, opacity: 0.7}]
+                    },
+                    show: true,
+                    addWaypoints: true,
+                    draggableWaypoints: true,
+                    fitSelectedRoutes: true,
+                    showAlternatives: true,
+                    position: 'topright'
+                }).addTo(map);
+            }
+        }, 1000);
+    </script>
+    """
+    
+    m.get_root().html.add_child(folium.Element(routing_script))
+    
+    return m
+
+def add_geocoding_search(m):
+    """
+    Add geocoding search control to find locations by name.
+    
+    Args:
+        m (folium.Map): Map object
+        
+    Returns:
+        folium.Map: Map with search control added
+    """
+    # Add Leaflet Geocoder via custom HTML/JS
+    geocoder_script = """
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script>
+        setTimeout(function() {
+            var map = window.map_object;
+            if (map) {
+                L.Control.geocoder({
+                    defaultMarkGeocode: false,
+                    position: 'topright',
+                    placeholder: 'Search for location...',
+                    errorMessage: 'Location not found'
+                })
+                .on('markgeocode', function(e) {
+                    var bbox = e.geocode.bbox;
+                    var poly = L.polygon([
+                        bbox.getSouthEast(),
+                        bbox.getNorthEast(),
+                        bbox.getNorthWest(),
+                        bbox.getSouthWest()
+                    ]);
+                    map.fitBounds(poly.getBounds());
+                    
+                    L.marker(e.geocode.center)
+                        .addTo(map)
+                        .bindPopup(e.geocode.name)
+                        .openPopup();
+                })
+                .addTo(map);
+            }
+        }, 1000);
+    </script>
+    """
+    
+    m.get_root().html.add_child(folium.Element(geocoder_script))
+    
+    return m
+
+def add_custom_osm_layers(m):
+    """
+    Add additional OpenStreetMap-based layers (cycling routes, hiking trails, etc.).
+    
+    Args:
+        m (folium.Map): Map object
+        
+    Returns:
+        folium.Map: Map with additional OSM layers
+    """
+    # Add OpenStreetMap Cycle Map layer
+    folium.TileLayer(
+        tiles='https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png',
+        attr='CyclOSM | Map data: © OpenStreetMap contributors',
+        name='Cycling Routes',
+        overlay=True,
+        control=True,
+        opacity=0.7
+    ).add_to(m)
+    
+    # Add OpenTopoMap layer
+    folium.TileLayer(
+        tiles='https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+        attr='Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap',
+        name='Topographic',
+        overlay=False,
+        control=True
+    ).add_to(m)
+    
+    # Add Humanitarian OSM layer
+    folium.TileLayer(
+        tiles='https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
+        attr='© OpenStreetMap contributors, Tiles courtesy of Humanitarian OpenStreetMap Team',
+        name='Humanitarian',
+        overlay=False,
+        control=True
+    ).add_to(m)
     
     return m

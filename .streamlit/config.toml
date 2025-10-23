@@ -1,27 +1,35 @@
-[server]
-address = "127.0.0.1"
-port = 8501
-headless = true
-enableCORS = false
-browser.serverAddress = "localhost"
-
 [theme]
-primaryColor = "#cc0233"
+# primaryColor = "#0f161e"
+primaryColor = "#1a6ce7"
 backgroundColor = "#ffffff"
 secondaryBackgroundColor = "#ffffff"
-textColor = "#000000"
-borderColor = "#dcdcdc"
-font = "Arial, sans-serif"
-baseFontSize = 14
-baseRadius = "none"
-linkColor = "#0a3474"
-linkUnderline = false
+textColor = "#1E252F"
+linkColor = "#0077c2"
+borderColor = "#d5dae5"
 showWidgetBorder = true
-headingFontSizes = ["33.17px", "22.12px", "18.06px", "16.1px"]
-headingFontWeights = ["700", "700", "700"]
-codeBackgroundColor = "#f4f4f4"
+showSidebarBorder = true
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+codeFont = "Fira Code:https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap"
+headingFont = "Plus Jakarta Sans:https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+baseFontSize = 16
+baseRadius = "0.5rem"
+codeBackgroundColor = "#fafafa"
+codeFontSize = "13px"
+headingFontSizes = ["34px", "24px", "20px", "18px", "16px", "16px"]
+headingFontWeights = [600, 600, 600, 600, 600, 500]
+chartCategoricalColors = [
+    "#1a6ce7",
+    "#ecb700",
+    "#51c9a4",
+    "#d3142e",
+    "#7156f4",
+    "#ff7b1c",
+    "#6fdeff",
+    "#d45dff",
+]
+dataframeHeaderBackgroundColor = "#ffffff"
+# dataframeBorderColor = "#d5dae5"
 
-[theme.sidebar]
-backgroundColor = "#eeeeee"
-secondaryBackgroundColor = "#eeeeee"
-borderColor = "#D0D0D0"
+
+# NEED: Set containers to 1rem radius
+# NEED: Change st.metric font family to Plus Jakarta Sans, font size to 14px, font weight to 600

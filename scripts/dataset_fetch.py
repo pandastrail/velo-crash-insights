@@ -160,7 +160,7 @@ def maybe_decompress(
         if downloaded_path.exists():
             downloaded_path.unlink()
         if tmp_path.exists():
-            tmp_path.unlink(missing_ok=True)  # type: ignore[arg-type]
+            tmp_path.unlink()
 
     final_size = final_output.stat().st_size
     print(f"[info] Decompressed dataset size: {format_size(final_size)}")
