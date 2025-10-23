@@ -520,21 +520,13 @@ try:
         # Identify blackspot zones using DBSCAN clustering
         blackspots_df = identify_blackspot_zones(filtered_df.copy(), eps_km=cluster_distance, min_samples=min_accidents)
         
-        # Display maps
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.write("**Accident Density Heatmap**")
-            hotspot_map = create_heatmap(filtered_df, basemap_style='Swiss Topo')
-            st_folium(hotspot_map, width=None, height=400)
-        
-        with col2:
-            st.write("**Identified Blackspot Zones**")
-            if not blackspots_df.empty:
-                blackspot_map = create_blackspot_map(blackspots_df, basemap_style='Swiss Topo')
-                st_folium(blackspot_map, width=None, height=400)
-            else:
-                st.info("No blackspot zones identified with current parameters. Try adjusting the cluster distance or minimum accidents.")
+        # Display map with blackspot
+        st.write("**Identified Blackspot Zones**")
+        if not blackspots_df.empty:
+            blackspot_map = create_blackspot_map(blackspots_df, basemap_style='opensreetmap')
+            st_folium(blackspot_map, width=None, height=400)
+        else:
+            st.info("No blackspot zones identified with current parameters. Try adjusting the cluster distance or minimum accidents.")
         
         # Display blackspot statistics
         if not blackspots_df.empty:

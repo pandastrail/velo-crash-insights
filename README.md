@@ -54,8 +54,9 @@ Streamlit starts a local server (default `http://localhost:8501`) and opens the 
 
 1. **Advanced Basemap Integration**: Added multiple basemap options including Swiss Topo, OpenStreetMap (default and variants), Satellite imagery, Terrain maps, and CartoDB with user-selectable basemap styles
 
-## Ideas for further development
+## Ideas for further development & checks
 
+- **Hotspots sanity check**: Check manually the identified top hotspots.
 - **Add docs, definitions, glossary**: Semantics from opendata.swiss dataset schema
 - **Add exact location**: street, plz, city, etc., to blackspots/hotspots and tables (use Swiss Geo API to derive location).
 - **Data Enrichment**: Add historical weather data to each record, like temperature, rainfall, icing, fog etc. and explore correlations. Add other external factors, for example, covid-period, mass events, rider charaterization (age, skill level, etc.), equipment attributes (bike type, gear, etc.), car traffic volume, construction sites, others?
