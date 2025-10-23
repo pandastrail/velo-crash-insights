@@ -812,10 +812,10 @@ st.divider()
 # Footer with credits and links
 st.subheader("🔗 Credits & Links")
 st.markdown("""
-            Created by @Giovanni Lopez 🚴‍♂️ while the 2025 Cycling HACK in Zürich | Data Source: opendata.swiss 
+            Created by @Giovanni Lopez 🚴‍♂️ while attending the 2025 Cycling HACK in Zürich
             - Event Page: 
                 - https://cyclinghack.ch/events/zurich-2025/
-            - Dataset:
+            - Dataset opendata.swiss:
                 - https://opendata.swiss/en/dataset/polizeilich-registrierte-verkehrsunfalle-auf-dem-stadtgebiet-zurich-seit-2011
                 - https://opendata.swiss/en/dataset/polizeilich-registrierte-verkehrsunfalle-auf-dem-stadtgebiet-zurich-seit-2011/resource/d2ba4c0b-3428-47a2-b19d-d6fb2a86814d
             - Who am I?:
