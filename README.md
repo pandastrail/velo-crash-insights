@@ -1,4 +1,4 @@
-# Swiss Road Traffic ~~Accidents~~ Crahses Dashboard
+# Swiss Road Traffic ~~Accidents~~ Crashes Dashboard
 
 ## Overview
 
