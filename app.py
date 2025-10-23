@@ -33,7 +33,7 @@ with special focus on cyclist safety and risk analysis.
 @st.cache_data
 def get_accident_data():
     # Load from Object Storage
-    return load_accident_data("attached_assets\RoadTrafficAccidentLocations_last5years.json", use_object_storage=False)
+    return load_accident_data("attached_assets\RoadTrafficAccidentLocations_last3years.json", use_object_storage=False)
 
 try:
     df = get_accident_data()
