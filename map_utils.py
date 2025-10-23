@@ -1,5 +1,5 @@
 import folium
-from folium.plugins import HeatMap, LocateControl
+from folium.plugins import HeatMap, LocateControl, Fullscreen
 import pandas as pd
 import numpy as np
 
@@ -52,7 +52,9 @@ def create_base_map(basemap_style='OpenStreetMap'):
         m = folium.Map(
             location=switzerland_center,
             zoom_start=8,
-            tiles='OpenStreetMap'
+            tiles='OpenStreetMap',
+            scrollWheelZoom=True,
+            options={'wheelPxPerZoomLevel': 120}
         )
     
     # Add alternative basemap layers
@@ -87,6 +89,14 @@ def create_base_map(basemap_style='OpenStreetMap'):
         auto_start=False,
         position='topleft',
         strings={'title': 'Show my location', 'popup': 'You are here'}
+        ).add_to(m)
+    
+        # Add fullscreen button
+    Fullscreen(
+        position='topleft',
+        title='Enter fullscreen mode',
+        title_cancel='Exit fullscreen mode',
+        force_separate_button=True
     ).add_to(m)
     
     return m

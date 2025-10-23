@@ -517,3 +517,54 @@ def generate_risk_predictions(df):
     predictions['recommendations'] = recommendations
     
     return predictions
+
+def calculate_monthly_trends(df, metric_type='total'):
+    """
+    Calculate monthly trends for sparkline visualization.
+    
+    Args:
+        df (pandas.DataFrame): Accident data
+        metric_type (str): Type of metric - 'total', 'fatal', 'bicycle', 'pedestrian'
+        
+    Returns:
+        dict: Monthly counts, current month value, previous month value, and delta
+    """
+    if df.empty or 'AccidentYear' not in df.columns or 'AccidentMonth' not in df.columns:
+        return None
+    
+    # Filter based on metric type
+    if metric_type == 'fatal':
+        filtered_df = df[df['AccidentSeverityCategory'] == 'as1']
+    elif metric_type == 'bicycle':
+        filtered_df = df[df['AccidentInvolvingBicycle'] == 'true']
+    elif metric_type == 'pedestrian':
+        filtered_df = df[df['AccidentInvolvingPedestrian'] == 'true']
+    else:
+        filtered_df = df
+    
+    # Create year-month combination for grouping
+    filtered_df = filtered_df.copy()
+    filtered_df['year_month'] = filtered_df['AccidentYear'].astype(str) + '-' + filtered_df['AccidentMonth'].astype(str).str.zfill(2)
+    
+    # Group by year-month
+    monthly_counts = filtered_df.groupby('year_month').size().sort_index()
+    
+    if len(monthly_counts) == 0:
+        return None
+    
+    # Get current and previous month values
+    current_month = monthly_counts.iloc[-1]
+    previous_month = monthly_counts.iloc[-2] if len(monthly_counts) > 1 else current_month
+    
+    # Calculate delta
+    delta = current_month - previous_month
+    delta_pct = (delta / previous_month * 100) if previous_month > 0 else 0
+    
+    return {
+        'monthly_values': monthly_counts.values.tolist(),
+        'monthly_labels': monthly_counts.index.tolist(),
+        'current_value': int(current_month),
+        'previous_value': int(previous_month),
+        'delta': int(delta),
+        'delta_pct': round(delta_pct, 1)
+    }

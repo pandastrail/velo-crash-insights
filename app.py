@@ -11,7 +11,7 @@ from data_loader import load_accident_data
 from map_utils import create_base_map, add_accident_markers, create_heatmap, create_blackspot_map
 from analytics import (calculate_summary_stats, create_temporal_analysis, filter_data,
                        identify_blackspot_zones, analyze_seasonal_patterns, 
-                       calculate_year_over_year_trends, generate_risk_predictions)
+                       calculate_year_over_year_trends, generate_risk_predictions, calculate_monthly_trends)
 
 # Page configuration
 st.set_page_config(
@@ -22,7 +22,8 @@ st.set_page_config(
 )
 
 # Title and introduction
-st.title("🚴‍♂️ Swiss Road Traffic Accidents Dashboard")
+st.title("🚴‍♂️ Swiss Road Traffic ~~Accidents~~ Crashes Dashboard",
+         help="The term 'crashes' is used to emphasize the impact on cyclists and pedestrians, as noted in Killed By A Traffic Engineer by Wes Marshall, PE, Phd. book")
 st.markdown("""
 This dashboard provides comprehensive insights into road traffic accidents across Switzerland, 
 with special focus on cyclist safety and risk analysis.
@@ -57,7 +58,7 @@ try:
     selected_severities = st.sidebar.multiselect(
         "Accident Severity",
         severities,
-        default=severities
+        default=None
     )
     
     # Accident type filter
@@ -65,7 +66,7 @@ try:
     selected_accident_types = st.sidebar.multiselect(
         "Accident Types",
         accident_types,
-        default=accident_types
+        default=None
     )
     
     # Road type filter
@@ -73,7 +74,7 @@ try:
     selected_road_types = st.sidebar.multiselect(
         "Road Types",
         road_types,
-        default=road_types
+        default=None
     )
     
     # Canton filter
@@ -86,9 +87,9 @@ try:
     
     # Involved parties filter
     st.sidebar.subheader("Involved Parties")
-    show_pedestrian = st.sidebar.checkbox("Pedestrian Accidents", value=True)
+    show_pedestrian = st.sidebar.checkbox("Pedestrian Accidents", value=False)
     show_bicycle = st.sidebar.checkbox("Bicycle Accidents", value=True)
-    show_motorcycle = st.sidebar.checkbox("Motorcycle Accidents", value=True)
+    show_motorcycle = st.sidebar.checkbox("Motorcycle Accidents", value=False)
     
     # Time filters
     st.sidebar.subheader("Time Filters")
@@ -99,7 +100,7 @@ try:
         "Months",
         options=months,
         format_func=lambda x: month_names[x-1],
-        default=months
+        default=None
     )
     
     hours = list(range(24))
@@ -131,21 +132,134 @@ try:
     # Main content
     # Summary statistics
     col1, col2, col3, col4 = st.columns(4)
+    st.caption("📊 Sparklines show accident trends by month. ▲/▼ Delta shows change vs. previous month.")
     
     with col1:
-        st.metric("Total Accidents", len(filtered_df))
+        total_trend = calculate_monthly_trends(filtered_df, 'total')
+        if total_trend:
+            st.metric(
+                "Total Accidents", 
+                len(filtered_df),
+                delta=f"{total_trend['delta']:+d} ({total_trend['delta_pct']:+.1f}%)",
+                delta_color="inverse"
+            )
+            # Sparkline
+            fig_spark = go.Figure()
+            fig_spark.add_trace(go.Scatter(
+                y=total_trend['monthly_values'],
+                mode='lines',
+                line=dict(color='#1f77b4', width=2),
+                fill='tozeroy',
+                fillcolor='rgba(31, 119, 180, 0.2)'
+            ))
+            fig_spark.update_layout(
+                height=60,
+                margin=dict(l=0, r=0, t=0, b=0),
+                xaxis=dict(visible=False),
+                yaxis=dict(visible=False),
+                showlegend=False,
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)'
+            )
+            st.plotly_chart(fig_spark, use_container_width=True, key='spark_total')
+        else:
+            st.metric("Total Accidents", len(filtered_df))
     
     with col2:
         fatal_accidents = len(filtered_df[filtered_df['AccidentSeverityCategory'] == 'as1'])
-        st.metric("Fatal Accidents", fatal_accidents)
+        fatal_trend = calculate_monthly_trends(filtered_df, 'fatal')
+        if fatal_trend:
+            st.metric(
+                "Fatal Accidents", 
+                fatal_accidents,
+                delta=f"{fatal_trend['delta']:+d} ({fatal_trend['delta_pct']:+.1f}%)",
+                delta_color="inverse"
+            )
+            # Sparkline
+            fig_spark = go.Figure()
+            fig_spark.add_trace(go.Scatter(
+                y=fatal_trend['monthly_values'],
+                mode='lines',
+                line=dict(color='#d62728', width=2),
+                fill='tozeroy',
+                fillcolor='rgba(214, 39, 40, 0.2)'
+            ))
+            fig_spark.update_layout(
+                height=60,
+                margin=dict(l=0, r=0, t=0, b=0),
+                xaxis=dict(visible=False),
+                yaxis=dict(visible=False),
+                showlegend=False,
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)'
+            )
+            st.plotly_chart(fig_spark, use_container_width=True, key='spark_fatal')
+        else:
+            st.metric("Fatal Accidents", fatal_accidents)
     
     with col3:
         bicycle_accidents = len(filtered_df[filtered_df['AccidentInvolvingBicycle'] == 'true'])
-        st.metric("Bicycle Accidents", bicycle_accidents)
+        bicycle_trend = calculate_monthly_trends(filtered_df, 'bicycle')
+        if bicycle_trend:
+            st.metric(
+                "Bicycle Accidents", 
+                bicycle_accidents,
+                delta=f"{bicycle_trend['delta']:+d} ({bicycle_trend['delta_pct']:+.1f}%)",
+                delta_color="inverse"
+            )
+            # Sparkline
+            fig_spark = go.Figure()
+            fig_spark.add_trace(go.Scatter(
+                y=bicycle_trend['monthly_values'],
+                mode='lines',
+                line=dict(color='#ff7f0e', width=2),
+                fill='tozeroy',
+                fillcolor='rgba(255, 127, 14, 0.2)'
+            ))
+            fig_spark.update_layout(
+                height=60,
+                margin=dict(l=0, r=0, t=0, b=0),
+                xaxis=dict(visible=False),
+                yaxis=dict(visible=False),
+                showlegend=False,
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)'
+            )
+            st.plotly_chart(fig_spark, use_container_width=True, key='spark_bicycle')
+        else:
+            st.metric("Bicycle Accidents", bicycle_accidents)
     
     with col4:
         pedestrian_accidents = len(filtered_df[filtered_df['AccidentInvolvingPedestrian'] == 'true'])
-        st.metric("Pedestrian Accidents", pedestrian_accidents)
+        pedestrian_trend = calculate_monthly_trends(filtered_df, 'pedestrian')
+        if pedestrian_trend:
+            st.metric(
+                "Pedestrian Accidents", 
+                pedestrian_accidents,
+                delta=f"{pedestrian_trend['delta']:+d} ({pedestrian_trend['delta_pct']:+.1f}%)",
+                delta_color="inverse"
+            )
+            # Sparkline
+            fig_spark = go.Figure()
+            fig_spark.add_trace(go.Scatter(
+                y=pedestrian_trend['monthly_values'],
+                mode='lines',
+                line=dict(color='#2ca02c', width=2),
+                fill='tozeroy',
+                fillcolor='rgba(44, 160, 44, 0.2)'
+            ))
+            fig_spark.update_layout(
+                height=60,
+                margin=dict(l=0, r=0, t=0, b=0),
+                xaxis=dict(visible=False),
+                yaxis=dict(visible=False),
+                showlegend=False,
+                paper_bgcolor='rgba(0,0,0,0)',
+                plot_bgcolor='rgba(0,0,0,0)'
+            )
+            st.plotly_chart(fig_spark, use_container_width=True, key='spark_pedestrian')
+        else:
+            st.metric("Pedestrian Accidents", pedestrian_accidents)
     
     # Tabs for different views
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["🗺️ Map View", "📊 Analytics", "⏰ Temporal Patterns", "🔥 Hotspots", "🚴 Cyclist Safety", "📋 Data Table"])
@@ -157,11 +271,8 @@ try:
         col1, col2 = st.columns([3, 1])
         
         with col2:
-            basemap_option = st.selectbox(
-                "Basemap Style",
-                ["OpenStreetMap", "Swiss Topo", "Satellite", "Terrain", "CartoDB"],
-                key="basemap_style"
-            )
+            # Set default basemap
+            basemap_option = "OpenStreetMap"
             
             map_style = st.selectbox(
                 "Map View",
@@ -184,7 +295,10 @@ try:
                     st.info(f"Showing heatmap view due to large number of accidents ({len(filtered_df)}). Uncheck some filters to see individual markers.")
                     m = create_heatmap(filtered_df, basemap_style=basemap_option)
             
-            map_data = st_folium(m, width=700, height=500)
+            map_data = st_folium(m, 
+                                 width=None, 
+                                 height=500,
+                                 )
     
     with tab2:
         st.subheader("📊 Accident Analytics")
@@ -197,6 +311,7 @@ try:
             severity_counts = filtered_df['AccidentSeverityCategory_en'].value_counts()
             fig_severity = px.pie(
                 values=severity_counts.values,
+                hole=0.4,
                 names=severity_counts.index,
                 title="Accident Severity Distribution"
             )
@@ -208,6 +323,8 @@ try:
             fig_types = px.bar(
                 x=type_counts.values,
                 y=type_counts.index,
+                color=type_counts.values,
+                color_continuous_scale='Reds',
                 orientation='h',
                 title="Top 10 Accident Types"
             )
@@ -222,6 +339,8 @@ try:
             fig_road = px.bar(
                 x=road_counts.index,
                 y=road_counts.values,
+                color=road_counts.values,
+                color_continuous_scale='Blues',
                 title="Accidents by Road Type"
             )
             st.plotly_chart(fig_road, use_container_width=True)
@@ -266,6 +385,8 @@ try:
                 hourly_data,
                 x='AccidentHour',
                 y='count',
+                color='count',
+                color_continuous_scale='Viridis',
                 title="Accidents by Hour of Day"
             )
             st.plotly_chart(fig_hourly, use_container_width=True)
@@ -281,6 +402,8 @@ try:
             weekday_data,
             x='AccidentWeekDay_en',
             y='count',
+            color='count',
+            color_continuous_scale='blues',
             title="Accidents by Day of Week"
         )
         st.plotly_chart(fig_weekday, use_container_width=True)
@@ -403,13 +526,13 @@ try:
         with col1:
             st.write("**Accident Density Heatmap**")
             hotspot_map = create_heatmap(filtered_df, basemap_style='Swiss Topo')
-            st_folium(hotspot_map, width=400, height=400)
+            st_folium(hotspot_map, width=None, height=400)
         
         with col2:
             st.write("**Identified Blackspot Zones**")
             if not blackspots_df.empty:
                 blackspot_map = create_blackspot_map(blackspots_df, basemap_style='Swiss Topo')
-                st_folium(blackspot_map, width=400, height=400)
+                st_folium(blackspot_map, width=None, height=400)
             else:
                 st.info("No blackspot zones identified with current parameters. Try adjusting the cluster distance or minimum accidents.")
         
@@ -532,6 +655,7 @@ try:
                 road_bike = bicycle_df['RoadType_en'].value_counts().head(5)
                 fig_bike_road = px.pie(
                     values=road_bike.values,
+                    hole=0.4,
                     names=road_bike.index,
                     title="Bicycle Accidents by Road Type"
                 )
@@ -542,6 +666,7 @@ try:
                 type_bike = bicycle_df['AccidentType_en'].value_counts().head(5)
                 fig_bike_type = px.pie(
                     values=type_bike.values,
+                    hole=0.4,
                     names=type_bike.index,
                     title="Most Common Bicycle Accident Types"
                 )
@@ -557,7 +682,7 @@ try:
                 
                 with col1:
                     bike_blackspot_map = create_blackspot_map(bicycle_blackspots, basemap_style='Swiss Topo')
-                    st_folium(bike_blackspot_map, width=500, height=400)
+                    st_folium(bike_blackspot_map, width=None, height=400)
                 
                 with col2:
                     st.write("**Top Cyclist Risk Zones:**")
@@ -690,3 +815,52 @@ try:
 except Exception as e:
     st.error(f"Error loading or processing data: {str(e)}")
     st.info("Please ensure the data file exists and is properly formatted.")
+
+st.divider()
+# Footer with credits and links
+st.subheader("🔗 Credits & Links")
+st.markdown("""
+            Created by @Giovanni Lopez 🚴‍♂️ while the 2025 Cycling HACK in Zürich | Data Source: opendata.swiss 
+            - Event Page: 
+                - https://cyclinghack.ch/events/zurich-2025/
+            - Dataset:
+                - https://opendata.swiss/en/dataset/polizeilich-registrierte-verkehrsunfalle-auf-dem-stadtgebiet-zurich-seit-2011
+                - https://opendata.swiss/en/dataset/polizeilich-registrierte-verkehrsunfalle-auf-dem-stadtgebiet-zurich-seit-2011/resource/d2ba4c0b-3428-47a2-b19d-d6fb2a86814d
+            - Who am I?:
+                - https://www.linkedin.com/in/giovlopez/
+                - https://www.instagram.com/giobcflowy/ 
+
+            Created with Streamlit 🚀
+            GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
+
+            - Explore more projects:
+                - https://bikeflow.ch
+                - https://mapaqua.ch/ (Native App for iOS and Android in development 🙂)
+                - https://makinita.ch
+
+            Buy me a coffee ☕: https://buymeacoffee.com/bikeflow
+            ,or a beer 🍺: https://www.paypal.com/ncp/payment/CJVK8M6HLW3C2
+""")
+
+# Data Disclaimer
+st.subheader("⚠️ Data Disclaimer")
+st.markdown("""
+    <div style='background-color: #f0f2f6; padding: 20px; border-radius: 5px; margin-top: 20px;'>
+    <h4 style='margin-top: 0;'>⚠️ Data Disclaimer</h4>
+    <p style='font-size: 14px; line-height: 1.6;'>
+    This dashboard and its visualizations have been created with the best intentions to provide insights into Swiss road traffic accidents. 
+    While reasonable checks and validations have been performed on the data and analysis, the information presented may contain errors, 
+    inaccuracies, or incomplete representations.
+    </p>
+    <p style='font-size: 14px; line-height: 1.6;'>
+    <strong>Important:</strong> Before making any decisions, implementing safety measures, or taking actions based on the information 
+    provided in this dashboard, users must conduct comprehensive verification, testing, and validation of the data and findings. 
+    This tool is intended for informational and analytical purposes only and should not be the sole basis for critical decisions 
+    related to road safety, urban planning, or policy making.
+    </p>
+    <p style='font-size: 14px; line-height: 1.6; margin-bottom: 0;'>
+    The creators and maintainers of this dashboard assume no liability for any decisions made or actions taken based on the 
+    information presented herein.
+    </p>
+    </div>
+    """, unsafe_allow_html=True)
