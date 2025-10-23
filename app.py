@@ -813,6 +813,7 @@ st.divider()
 st.subheader("🔗 Credits & Links")
 st.markdown("""
             Created by @Giovanni Lopez 🚴‍♂️ while attending the 2025 Cycling HACK in Zürich
+            Using Streamlit 🚀 Magic, GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
             - Event Page: 
                 - https://cyclinghack.ch/events/zurich-2025/
             - Dataset opendata.swiss:
@@ -821,17 +822,13 @@ st.markdown("""
             - Who am I?:
                 - https://www.linkedin.com/in/giovlopez/
                 - https://www.instagram.com/giobcflowy/ 
-
-            Created with Streamlit 🚀
-            GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
-
             - Explore more projects:
                 - https://bikeflow.ch
                 - https://mapaqua.ch/ (Native App for iOS and Android in development 🙂)
                 - https://makinita.ch
 
             Buy me a coffee ☕: https://buymeacoffee.com/bikeflow
-            ,or a beer 🍺: https://www.paypal.com/ncp/payment/CJVK8M6HLW3C2
+            ,or a two ☕☕: https://www.paypal.com/ncp/payment/CJVK8M6HLW3C2
 """)
 
 # Data Disclaimer
