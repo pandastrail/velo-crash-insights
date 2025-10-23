@@ -33,7 +33,7 @@ with special focus on cyclist safety and risk analysis.
 @st.cache_data
 def get_accident_data():
     # Load from Object Storage
-    return load_accident_data("attached_assets\RoadTrafficAccidentLocations.json", use_object_storage=False)
+    return load_accident_data("attached_assets\RoadTrafficAccidentLocations_last5years.json", use_object_storage=False)
 
 try:
     df = get_accident_data()
@@ -843,7 +843,6 @@ st.markdown("""
 """)
 
 # Data Disclaimer
-st.subheader("⚠️ Data Disclaimer")
 st.markdown("""
     <div style='background-color: #f0f2f6; padding: 20px; border-radius: 5px; margin-top: 20px;'>
     <h4 style='margin-top: 0;'>⚠️ Data Disclaimer</h4>
