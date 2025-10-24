@@ -248,7 +248,12 @@ try:
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)'
             )
-            st.plotly_chart(fig_spark, width='stretch', key='spark_fatal')
+            config = {"displayModeBar": False}
+            st.plotly_chart(
+                fig_spark,
+                config=config,
+                use_container_width=True, 
+                )
         else:
             st.metric("Fatal Accidents", fatal_accidents)
     
@@ -280,7 +285,12 @@ try:
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)'
             )
-            st.plotly_chart(fig_spark, width='stretch', key='spark_bicycle')
+            config = {"displayModeBar": False}
+            st.plotly_chart(
+                fig_spark,
+                config=config,
+                use_container_width=True,   # replaces width='stretch'
+                )
         else:
             st.metric("Bicycle Accidents", bicycle_accidents)
     
@@ -312,7 +322,12 @@ try:
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)'
             )
-            st.plotly_chart(fig_spark, width='stretch', key='spark_pedestrian')
+            config = {"displayModeBar": False}
+            st.plotly_chart(
+                fig_spark,
+                config=config,
+                use_container_width=True,   # replaces width='stretch'
+                )
         else:
             st.metric("Pedestrian Accidents", pedestrian_accidents)
     
@@ -369,7 +384,12 @@ try:
                 names=severity_counts.index,
                 title="Accident Severity Distribution"
             )
-            st.plotly_chart(fig_severity, width='stretch')
+            config = {"displayModeBar": False}
+            st.plotly_chart(
+                fig_severity,
+                config=config,
+                use_container_width=True,   # replaces width='stretch'
+                )
         
         with col2:
             # Accident types
@@ -383,7 +403,12 @@ try:
                 title="Top 10 Accident Types"
             )
             fig_types.update_layout(yaxis={'categoryorder': 'total ascending'})
-            st.plotly_chart(fig_types, width='stretch')
+            config = {"displayModeBar": False}
+            st.plotly_chart(
+                fig_types,
+                config=config,
+                use_container_width=True,   # replaces width='stretch'
+                )
         
         col1, col2 = st.columns(2)
         
@@ -397,7 +422,12 @@ try:
                 color_continuous_scale='Blues',
                 title="Accidents by Road Type"
             )
-            st.plotly_chart(fig_road, width='stretch')
+            config = {"displayModeBar": False}
+            st.plotly_chart(
+                fig_road,
+                config=config,
+                use_container_width=True,   # replaces width='stretch'
+                )
         
         with col2:
             # Canton analysis
@@ -407,7 +437,12 @@ try:
                 y=canton_counts.values,
                 title="Top 10 Cantons by Accident Count"
             )
-            st.plotly_chart(fig_canton, width='stretch')
+            config = {"displayModeBar": False}
+            st.plotly_chart(
+                fig_canton,
+                config=config,
+                use_container_width=True,   # replaces width='stretch'
+                )
     
     with tab3:
         st.subheader("⏰ Temporal Patterns")
@@ -428,7 +463,12 @@ try:
                 title="Accidents by Month",
                 markers=True
             )
-            st.plotly_chart(fig_monthly, width='stretch')
+            config = {"displayModeBar": False}
+            st.plotly_chart(
+                fig_monthly,
+                config=config,
+                use_container_width=True,   # replaces width='stretch'
+                )
         
         with col2:
             # Hourly distribution
@@ -443,7 +483,12 @@ try:
                 color_continuous_scale='Viridis',
                 title="Accidents by Hour of Day"
             )
-            st.plotly_chart(fig_hourly, width='stretch')
+            config = {"displayModeBar": False}
+            st.plotly_chart(
+                fig_hourly,
+                config=config,
+                use_container_width=True,   # replaces width='stretch'
+                )
         
         # Weekly pattern
         weekday_data = filtered_df.groupby('AccidentWeekDay_en').size().reset_index(name='count')
@@ -460,7 +505,12 @@ try:
             color_continuous_scale='blues',
             title="Accidents by Day of Week"
         )
-        st.plotly_chart(fig_weekday, width='stretch')
+        config = {"displayModeBar": False}
+        st.plotly_chart(
+                fig_weekday,
+                config=config,
+                use_container_width=True,   # replaces width='stretch'
+                )
         
         # Heatmap: Hour vs Day of Week
         if not filtered_df.empty:
@@ -476,7 +526,12 @@ try:
                 labels=dict(x="Hour", y="Day of Week", color="Count"),
                 aspect="auto"
             )
-            st.plotly_chart(fig_heatmap, width='stretch')
+            config = {"displayModeBar": False}
+            st.plotly_chart(
+                fig_heatmap,
+                config=config,
+                use_container_width=True,   # replaces width='stretch'
+                )
         
         # Seasonal analysis
         st.subheader("🌦️ Seasonal Patterns")
@@ -502,7 +557,12 @@ try:
                     color='Count',
                     color_continuous_scale='Blues'
                 )
-                st.plotly_chart(fig_season, width='stretch')
+                config = {"displayModeBar": False}
+                st.plotly_chart(
+                    fig_season,
+                    config=config,
+                    use_container_width=True,   # replaces width='stretch'
+                    )
             
             with col2:
                 # Bicycle accidents by season
@@ -519,7 +579,12 @@ try:
                         title="Bicycle Accidents by Season",
                         markers=True
                     )
-                    st.plotly_chart(fig_bike_season, width='stretch')
+                    config = {"displayModeBar": False}
+                    st.plotly_chart(
+                        fig_bike_season,
+                        config=config,
+                        use_container_width=True,   # replaces width='stretch'
+                    )
         
         # Year-over-year trends
         st.subheader("📆 Year-over-Year Trends")
@@ -542,7 +607,12 @@ try:
                     title="Total Accidents Over Years",
                     markers=True
                 )
-                st.plotly_chart(fig_yearly, width='stretch')
+                config = {"displayModeBar": False}
+                st.plotly_chart(
+                    fig_yearly,
+                    config=config,
+                    use_container_width=True,   # replaces width='stretch'
+                    )
             
             with col2:
                 # Bicycle trend
@@ -559,7 +629,12 @@ try:
                         markers=True,
                         line_shape='spline'
                     )
-                    st.plotly_chart(fig_bike_yearly, width='stretch')
+                    config = {"displayModeBar": False}
+                    st.plotly_chart(
+                        fig_bike_yearly,
+                        config=config,
+                        use_container_width=True,   # replaces width='stretch'
+                        )
     
     with tab4:
         st.subheader("🔥 Accident Hotspots & Blackspot Zones")
@@ -673,7 +748,12 @@ try:
                     color='count',
                     color_continuous_scale='Reds'
                 )
-                st.plotly_chart(fig_bike_hour, width='stretch')
+                config = {"displayModeBar": False}
+                st.plotly_chart(
+                    fig_bike_hour,
+                    config=config,
+                    use_container_width=True,   # replaces width='stretch'
+                    )
             
             with col2:
                 # Bicycle accidents by day of week
