@@ -13,6 +13,19 @@ from map_utils import (create_base_map, add_accident_markers, create_heatmap, cr
 from analytics import (calculate_summary_stats, create_temporal_analysis, filter_data,
                        identify_blackspot_zones, analyze_seasonal_patterns, 
                        calculate_year_over_year_trends, generate_risk_predictions, calculate_monthly_trends)
+from pathlib import Path
+
+# Resolve data file robustly (works locally and on Streamlit Cloud)
+DATA_DIR = Path(__file__).parent / "attached_assets"
+CANDIDATES = [
+    "RoadTrafficAccidentLocations_last6years.json",   # fallback if you rename
+]
+def resolve_data_file():
+    for name in CANDIDATES:
+        p = DATA_DIR / name
+        if p.exists():
+            return str(p)
+    return None
 
 # Page configuration
 st.set_page_config(
@@ -33,8 +46,13 @@ with special focus on cyclist safety and risk analysis.
 # Load data
 @st.cache_data
 def get_accident_data():
-    # Load from Object Storage
-    return load_accident_data("attached_assets\RoadTrafficAccidentLocations_last6years.json", use_object_storage=False)
+    file_path = resolve_data_file()
+    if not file_path:
+        st.error(f"Data file not found in {DATA_DIR}. "
+                 f"Found: {[p.name for p in DATA_DIR.glob('*')] if DATA_DIR.exists() else 'no folder'}")
+        st.stop()
+    return load_accident_data(file_path, use_object_storage=False)
+
 
 def make_csv_bytes(df, cols):
     return df[cols].to_csv(index=False).encode("utf-8")
