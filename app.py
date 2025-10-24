@@ -34,7 +34,7 @@ with special focus on cyclist safety and risk analysis.
 @st.cache_data
 def get_accident_data():
     # Load from Object Storage
-    return load_accident_data("attached_assets\RoadTrafficAccidentLocations_last10years.json", use_object_storage=False)
+    return load_accident_data("attached_assets\RoadTrafficAccidentLocations_last6years.json", use_object_storage=False)
 
 def make_csv_bytes(df, cols):
     return df[cols].to_csv(index=False).encode("utf-8")
