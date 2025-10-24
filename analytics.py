@@ -109,8 +109,57 @@ def create_temporal_analysis(df):
     
     return temporal_stats
 
+def _norm_bool(series):
+    # input are strings 'true'/'false' or NaN
+    return series.fillna('false').astype(str).str.lower().eq('true')
+
+def apply_party_filter(df, selected_parties, party_mode):
+    # Map labels to columns present in df
+    cols = {
+        "Pedestrian": "AccidentInvolvingPedestrian",
+        "Bicycle": "AccidentInvolvingBicycle",
+        "Motorcycle": "AccidentInvolvingMotorcycle",
+    }
+    present = {k: v for k, v in cols.items() if v in df.columns}
+    if not selected_parties:
+        return df  # no party filter
+
+    # Build boolean columns
+    party_bools = {k: _norm_bool(df[v]) for k, v in present.items()}
+
+    mode = (party_mode or "").lower()
+
+    if mode.startswith("any"):
+        # OR of selected
+        mask = None
+        for p in selected_parties:
+            if p in party_bools:
+                mask = party_bools[p] if mask is None else (mask | party_bools[p])
+        return df.loc[mask] if mask is not None else df
+
+    if "include all" in mode or mode.startswith("include"):
+        # AND of selected (others may be true)
+        mask = None
+        for p in selected_parties:
+            if p in party_bools:
+                mask = party_bools[p] if mask is None else (mask & party_bools[p])
+        return df.loc[mask] if mask is not None else df
+
+    # Default: Only selected (exact)
+    # All selected must be true AND all unselected must be false
+    mask_parts = []
+    for p, s in party_bools.items():
+        if p in selected_parties:
+            mask_parts.append(s)          # must be True
+        else:
+            mask_parts.append(~s)         # must be False
+    exact_mask = mask_parts[0]
+    for m in mask_parts[1:]:
+        exact_mask &= m
+    return df.loc[exact_mask]
+
 def filter_data(df, years=None, severities=None, accident_types=None, road_types=None, 
-                cantons=None, show_pedestrian=True, show_bicycle=True, show_motorcycle=True,
+                cantons=None, selected_parties=None, party_mode=None,
                 months=None, hour_range=None):
     """
     Apply comprehensive filters to accident data.
@@ -132,67 +181,41 @@ def filter_data(df, years=None, severities=None, accident_types=None, road_types
         pandas.DataFrame: Filtered data
     """
     filtered_df = df.copy()
+    mask = pd.Series(True, index=filtered_df.index, dtype=bool)
     
     # Year filter
     if years and 'AccidentYear' in filtered_df.columns:
-        filtered_df = filtered_df[filtered_df['AccidentYear'].isin(years)]
+        mask &= filtered_df['AccidentYear'].isin(years)
     
     # Severity filter
     if severities and 'AccidentSeverityCategory_en' in filtered_df.columns:
-        filtered_df = filtered_df[filtered_df['AccidentSeverityCategory_en'].isin(severities)]
+        mask &= filtered_df['AccidentSeverityCategory_en'].isin(severities)
     
     # Accident type filter
     if accident_types and 'AccidentType_en' in filtered_df.columns:
-        filtered_df = filtered_df[filtered_df['AccidentType_en'].isin(accident_types)]
+        mask &= filtered_df['AccidentType_en'].isin(accident_types)
     
     # Road type filter
     if road_types and 'RoadType_en' in filtered_df.columns:
-        filtered_df = filtered_df[filtered_df['RoadType_en'].isin(road_types)]
+        mask &= filtered_df['RoadType_en'].isin(road_types)
     
     # Canton filter
     if cantons and 'CantonCode' in filtered_df.columns:
-        filtered_df = filtered_df[filtered_df['CantonCode'].isin(cantons)]
+        mask &= filtered_df['CantonCode'].isin(cantons)
     
     # Involved parties filter
-    party_conditions = []
-    if show_pedestrian and 'AccidentInvolvingPedestrian' in filtered_df.columns:
-        party_conditions.append(filtered_df['AccidentInvolvingPedestrian'] == 'true')
-    if show_bicycle and 'AccidentInvolvingBicycle' in filtered_df.columns:
-        party_conditions.append(filtered_df['AccidentInvolvingBicycle'] == 'true')
-    if show_motorcycle and 'AccidentInvolvingMotorcycle' in filtered_df.columns:
-        party_conditions.append(filtered_df['AccidentInvolvingMotorcycle'] == 'true')
-    
-    # If none of the party types are selected, show all
-    if not (show_pedestrian or show_bicycle or show_motorcycle):
-        pass  # Show all
-    elif party_conditions:
-        # Combine conditions with OR
-        combined_condition = party_conditions[0]
-        for condition in party_conditions[1:]:
-            combined_condition = combined_condition | condition
-        
-        # Also include accidents that don't involve any of these parties
-        no_special_parties = (
-            (filtered_df['AccidentInvolvingPedestrian'] == 'false') &
-            (filtered_df['AccidentInvolvingBicycle'] == 'false') &
-            (filtered_df['AccidentInvolvingMotorcycle'] == 'false')
-        )
-        
-        filtered_df = filtered_df[combined_condition | no_special_parties]
+    filtered_df = apply_party_filter(filtered_df, selected_parties, party_mode)
     
     # Month filter
     if months and 'AccidentMonth' in filtered_df.columns:
-        filtered_df = filtered_df[filtered_df['AccidentMonth'].isin(months)]
+        mask &= filtered_df['AccidentMonth'].isin(months)
     
     # Hour range filter
     if hour_range and 'AccidentHour' in filtered_df.columns:
         start_hour, end_hour = hour_range
-        filtered_df = filtered_df[
-            (filtered_df['AccidentHour'] >= start_hour) & 
-            (filtered_df['AccidentHour'] <= end_hour)
-        ]
+        mask &= (filtered_df['AccidentHour'] >= start_hour) & (filtered_df['AccidentHour'] <= end_hour)
     
-    return filtered_df
+    return filtered_df.loc[mask].copy()
 
 def calculate_risk_metrics(df):
     """

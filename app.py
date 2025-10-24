@@ -9,7 +9,7 @@ import json
 import numpy as np
 from data_loader import load_accident_data
 from map_utils import (create_base_map, add_accident_markers, create_heatmap, create_blackspot_map, 
-                       add_routing_control, add_geocoding_search, add_custom_osm_layers)
+                       add_routing_control, add_geocoding_search, add_custom_osm_layers, fit_map_to_df)
 from analytics import (calculate_summary_stats, create_temporal_analysis, filter_data,
                        identify_blackspot_zones, analyze_seasonal_patterns, 
                        calculate_year_over_year_trends, generate_risk_predictions, calculate_monthly_trends)
@@ -34,7 +34,10 @@ with special focus on cyclist safety and risk analysis.
 @st.cache_data
 def get_accident_data():
     # Load from Object Storage
-    return load_accident_data("attached_assets\RoadTrafficAccidentLocations_last3years.json", use_object_storage=False)
+    return load_accident_data("attached_assets\RoadTrafficAccidentLocations_last10years.json", use_object_storage=False)
+
+def make_csv_bytes(df, cols):
+    return df[cols].to_csv(index=False).encode("utf-8")
 
 try:
     df = get_accident_data()
@@ -51,7 +54,7 @@ try:
     selected_years = st.sidebar.multiselect(
         "Select Years", 
         years, 
-        default=years[-1:]  # Default to the most recent year(s)
+        default=years[-3:]  # Default to the most recent year(s)
     )
     
     # Severity filter
@@ -82,16 +85,39 @@ try:
     cantons = sorted(df['CantonCode'].unique())
     selected_cantons = st.sidebar.multiselect(
         "Cantons",
-        cantons,
+        options=cantons,
         default=['ZH'] if 'ZH' in cantons else cantons  
     )
     
-    # Involved parties filter
+    # Involved Parties (multiselect + mode)
     st.sidebar.subheader("Involved Parties")
-    show_pedestrian = st.sidebar.checkbox("Pedestrian Accidents", value=False)
-    show_bicycle = st.sidebar.checkbox("Bicycle Accidents", value=True)
-    show_motorcycle = st.sidebar.checkbox("Motorcycle Accidents", value=False)
-    
+
+    PARTY_LABELS = {
+        "Pedestrian": "AccidentInvolvingPedestrian",
+        "Bicycle": "AccidentInvolvingBicycle",
+        "Motorcycle": "AccidentInvolvingMotorcycle",
+    }
+
+    selected_parties = st.sidebar.multiselect(
+        "Select involved parties",
+        options=list(PARTY_LABELS.keys()),
+        default=["Bicycle"],
+        key="party_multi",
+        help="Choose which parties to filter on."
+    )
+
+    party_mode = st.sidebar.selectbox(
+        "Party filter mode",
+        options=["Only selected (exact)", "Any of selected (OR)", "Include all selected (AND)"],
+        index=0,
+        help=(
+            "Only selected (exact): keep rows where ONLY the chosen parties are involved. "
+            "Any of selected (OR): keep rows involving at least one of the chosen parties. "
+            "Include all selected (AND): keep rows that include all chosen parties (others may also be involved)."
+        ),
+        key="party_mode"
+    )
+
     # Time filters
     st.sidebar.subheader("Time Filters")
     months = list(range(1, 13))
@@ -119,9 +145,8 @@ try:
         selected_accident_types,
         selected_road_types,
         selected_cantons,
-        show_pedestrian,
-        show_bicycle,
-        show_motorcycle,
+        selected_parties,     
+        party_mode,           
         selected_months,
         selected_hours
     )
@@ -266,58 +291,39 @@ try:
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["🗺️ Map View", "📊 Analytics", "⏰ Temporal Patterns", "🔥 Hotspots", "🚴 Cyclist Safety", "📋 Data Table"])
     
     with tab1:
-        st.subheader("Accident Locations Across Switzerland")
-        
-        # Map display options
+        st.subheader("Accident Locations Across Switzerland", 
+                     help="""Interactive map showing accident locations with options for heatmap and individual markers. 
+                             Reduce filters to see individual markers if too many accidents are present.
+                             Click on markers for detailed info.
+                     """)
+
         col1, col2 = st.columns([3, 1])
-        
+
         with col2:
-            # Set default basemap
-            basemap_option = "OpenStreetMap"
-            
-            map_style = st.selectbox(
-                "Map View",
-                ["Normal", "Heatmap"],
-                key="map_style"
-            )
-            
-            show_markers = st.checkbox("Show Individual Markers", value=True)
-        
-            st.markdown("**OSM Features:**")
-            enable_routing = st.checkbox("Enable Routing", value=False, help="Add route planning between points")
-            enable_search = st.checkbox("Enable Location Search", value=False, help="Search for locations")
-            show_osm_layers = st.checkbox("Show OSM Layers", value=True, help="Add cycling, topo, and humanitarian layers")
+            map_style = st.selectbox("Map View", ["Normal", "Heatmap"], key="map_style")
+            show_markers = st.checkbox("Show Individual Markers", 
+                                       value=True,
+                                       help="Colors markers by severity. Disable to see heatmap only.",
+                                    )
 
         with col1:
             if map_style == "Heatmap":
-                # Create heatmap
-                m = create_heatmap(filtered_df, basemap_style=basemap_option)
+                m = create_heatmap(filtered_df)  # uses slim create_base_map()
             else:
-                # Create normal map with markers
-                m = create_base_map(basemap_style=basemap_option)
-                if show_markers and len(filtered_df) <= 1000:  # Limit markers for performance
+                m = create_base_map()
+                if show_markers and len(filtered_df) <= 1000:
                     m = add_accident_markers(m, filtered_df)
                 elif len(filtered_df) > 1000:
-                    st.info(f"Showing heatmap view due to large number of accidents ({len(filtered_df)}). Uncheck some filters to see individual markers.")
-                    m = create_heatmap(filtered_df, basemap_style=basemap_option)
-            
-            # Add OSM features if enabled
-            if show_osm_layers:
-                m = add_custom_osm_layers(m)
-            
-            if enable_routing:
-                m = add_routing_control(m)
-            
-            if enable_search:
-                m = add_geocoding_search(m)
-            
-            # Use a unique key based on selections to force re-render when they change
-            map_key = f"{basemap_option}_{map_style}_{show_markers}_{enable_routing}_{enable_search}_{show_osm_layers}_{len(filtered_df)}"
+                    st.info(
+                        f"Showing heatmap view due to large number of accidents ({len(filtered_df)}). "
+                        "Uncheck some filters to see individual markers."
+                    )
+                    m = create_heatmap(filtered_df)
 
-            map_data = st_folium(m, 
-                                 width=None, 
-                                 height=500,
-                                 )
+            # Always zoom to current filtered data
+            m = fit_map_to_df(m, filtered_df, lat_col="Latitude", lon_col="Longitude", pad_deg=0.01)
+
+            st_folium(m, use_container_width=True, height=500, key="main_map")
     
     with tab2:
         st.subheader("📊 Accident Analytics")
@@ -776,24 +782,31 @@ try:
         with col1:
             if show_columns:
                 display_df = filtered_df[show_columns].copy()
-                
+
                 # Format boolean columns
                 for col in ['AccidentInvolvingBicycle', 'AccidentInvolvingPedestrian', 'AccidentInvolvingMotorcycle']:
                     if col in display_df.columns:
                         display_df[col] = display_df[col].map({'true': '✓', 'false': '✗'})
-                
+
                 st.dataframe(display_df, width='stretch', height=400)
-                
-                # Download button
-                csv = display_df.to_csv(index=False)
-                st.download_button(
-                    label="Download filtered data as CSV",
-                    data=csv,
-                    file_name="swiss_accidents_filtered.csv",
-                    mime="text/csv"
-                )
+
+                # --- robust download: bytes + stable key ---
+                if not display_df.empty:
+                    csv_bytes = display_df.to_csv(index=False).encode("utf-8")
+                    # make the key stable across re-runs; tie it to columns+rowcount, not transient ids
+                    dl_key = f"dl_csv_{'_'.join(show_columns)}_{len(display_df)}"
+                    st.download_button(
+                        label="Download filtered data as CSV",
+                        data=csv_bytes,
+                        file_name="swiss_accidents_filtered.csv",
+                        mime="text/csv",
+                        key=dl_key,
+                    )
+                else:
+                    st.info("No rows to download with current filters.")
             else:
                 st.info("Please select columns to display")
+
 
     # Footer with insights
     st.markdown("---")

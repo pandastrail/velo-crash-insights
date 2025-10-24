@@ -25,6 +25,7 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+pyproject.toml
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -77,6 +78,7 @@ target/
 
 # Jupyter Notebook
 .ipynb_checkpoints
+notebook/*
 
 # IPython
 profile_default/
@@ -181,4 +183,5 @@ __marimo__/
 
 # Data, File too big to push via CLI
 attached_assets/RoadTrafficAccidentLocations.json
+attached_assets/RoadTrafficAccidentLocations_last3years.json
 attached_assets/RoadTrafficAccidentLocations_last5years.json
