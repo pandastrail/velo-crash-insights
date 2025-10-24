@@ -210,7 +210,13 @@ try:
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)'
             )
-            st.plotly_chart(fig_spark, config={"displayModeBar": False}, width='stretch', key='spark_total')
+            config = {"displayModeBar": False}
+            st.plotly_chart(
+                fig_spark,
+                config=config,
+                use_container_width=True,   # replaces width='stretch'
+                )
+
         else:
             st.metric("Total Accidents", len(filtered_df))
     
