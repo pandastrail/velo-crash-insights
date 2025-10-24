@@ -205,7 +205,8 @@ try:
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)'
             )
-            st.plotly_chart(fig_spark, width='stretch', key='spark_total')
+            config = {"displayModeBar": False}
+            st.plotly_chart(fig_spark, config=config, width='stretch', key='spark_total')
         else:
             st.metric("Total Accidents", len(filtered_df))
     
