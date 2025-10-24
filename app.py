@@ -5,6 +5,7 @@ from streamlit_folium import st_folium
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+import plotly.io as pio
 import json
 import numpy as np
 from data_loader import load_accident_data
@@ -26,6 +27,10 @@ def resolve_data_file():
         if p.exists():
             return str(p)
     return None
+
+# Set Plotly default template
+pio.renderers.default = "browser"
+pio.templates.default = "plotly_white"
 
 # Page configuration
 st.set_page_config(
@@ -205,8 +210,7 @@ try:
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)'
             )
-            config = {"displayModeBar": False}
-            st.plotly_chart(fig_spark, config=config, width='stretch', key='spark_total')
+            st.plotly_chart(fig_spark, config={"displayModeBar": False}, width='stretch', key='spark_total')
         else:
             st.metric("Total Accidents", len(filtered_df))
     
