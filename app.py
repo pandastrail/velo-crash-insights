@@ -973,7 +973,7 @@ st.markdown("""
             - Event Page: 
                 - (Cycling Hack Zürich 2025)[https://cyclinghack.ch/events/zurich-2025/]
             - Dataset opendata.swiss:
-                - https://opendata.swiss/en/dataset/polizeilich-registrierte-verkehrsunfalle-auf-dem-stadtgebiet-zurich-seit-2011
+                - (Open Data Swiss)[https://opendata.swiss/en/dataset/polizeilich-registrierte-verkehrsunfalle-auf-dem-stadtgebiet-zurich-seit-2011]
                 - https://opendata.swiss/en/dataset/polizeilich-registrierte-verkehrsunfalle-auf-dem-stadtgebiet-zurich-seit-2011/resource/d2ba4c0b-3428-47a2-b19d-d6fb2a86814d
             - Who am I?:
                 - https://www.linkedin.com/in/giovlopez/
