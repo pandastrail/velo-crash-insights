@@ -771,7 +771,12 @@ try:
                     color='count',
                     color_continuous_scale='Oranges'
                 )
-                st.plotly_chart(fig_bike_day, width='stretch')
+                config = {"displayModeBar": False}
+                st.plotly_chart(
+                    fig_bike_day,
+                    config=config,
+                    use_container_width=True,   # replaces width='stretch'
+                )
             
             # Road type and accident type analysis
             col1, col2 = st.columns(2)
@@ -785,7 +790,12 @@ try:
                     names=road_bike.index,
                     title="Bicycle Accidents by Road Type"
                 )
-                st.plotly_chart(fig_bike_road, width='stretch')
+                config = {"displayModeBar": False}
+                st.plotly_chart(
+                    fig_bike_road,
+                    config=config,
+                    use_container_width=True,   # replaces width='stretch'
+                )
             
             with col2:
                 # Accident types for bicycles
@@ -796,7 +806,12 @@ try:
                     names=type_bike.index,
                     title="Most Common Bicycle Accident Types"
                 )
-                st.plotly_chart(fig_bike_type, width='stretch')
+                config = {"displayModeBar": False}
+                st.plotly_chart(
+                    fig_bike_type,
+                    config=config,
+                    use_container_width=True,   # replaces width='stretch'
+                )
             
             # Bicycle blackspots
             st.subheader("🎯 Bicycle Accident Blackspots")
@@ -956,7 +971,7 @@ st.markdown("""
             Created by @Giovanni Lopez 🚴‍♂️ while attending the 2025 Cycling HACK in Zürich
             Using Streamlit 🚀 Magic, GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007
             - Event Page: 
-                - https://cyclinghack.ch/events/zurich-2025/
+                - (Cycling Hack Zürich 2025)[https://cyclinghack.ch/events/zurich-2025/]
             - Dataset opendata.swiss:
                 - https://opendata.swiss/en/dataset/polizeilich-registrierte-verkehrsunfalle-auf-dem-stadtgebiet-zurich-seit-2011
                 - https://opendata.swiss/en/dataset/polizeilich-registrierte-verkehrsunfalle-auf-dem-stadtgebiet-zurich-seit-2011/resource/d2ba4c0b-3428-47a2-b19d-d6fb2a86814d
